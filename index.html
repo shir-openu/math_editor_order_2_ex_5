@@ -193,39 +193,50 @@ y = C_1*sin(x) + C_2*cos(x)"></textarea>
 /* =========================
    מבנה נתונים של תרגילים
    ========================= */
+/* =========================
+   מסגרת גנרית לסוגי תרגילים
+   ========================= */
+const exerciseTypes = {
+  undetermined_coefficients: {
+    name: 'מקדמים בלתי מוגדרים',
+    requiredTerms: [
+      { type: 'trig', function: 'cos', coefficient: 2, withConstant: true },
+      { type: 'trig', function: 'sin', coefficient: 2, withConstant: true },
+      { type: 'constant', value: 2, allowNegative: false }
+    ],
+    constantCount: 2
+  }
+};
+
 const problems = [
   {
-    id: 'ode_second_order_variation_params_01',
-    title: 'מסדר שני — וריאציית פרמטרים',
-    latexProblem: String.raw`y'' + y = e^x`,
+    id: 'ode_second_order_undetermined_coeff_01',
+    type: 'undetermined_coefficients',
+    title: 'מסדר שני — מקדמים בלתי מוגדרים',
+    latexProblem: String.raw`y'' + 4y = 8`,
     hint1Html: `
       זוהי משוואה לינארית אי-הומוגנית מסדר שני עם מקדמים קבועים.<br/>
-      השתמשו בשיטת וריאציית הפרמטרים לפתרון.<br/>
+      השתמשו בשיטת המקדמים לפתרון.<br/>
       הפתרון הכללי: \\(y = y_h + y_p\\)<br/>
-      כאשר \\(y_h\\) הוא הפתרון של המשוואה ההומוגנית \\(y'' + y = 0\\)
+      כאשר \\(y_h\\) הוא הפתרון של המשוואה ההומוגנית \\(y'' + 4y = 0\\)
     `,
     hint2Html: `
-      המשוואה ההומוגנית: \\(y'' + y = 0\\) עם משוואה אופיינית \\(r^2 + 1 = 0\\)<br/>
-      השורשים: \\(r = \\pm i\\)<br/>
-      הפתרון ההומוגני: \\(y_h = C_1 \\cos(x) + C_2 \\sin(x)\\)<br/>
-      לוריאציית פרמטרים: \\(y_1 = \\cos(x), y_2 = \\sin(x), g(x) = e^x\\)
+      המשוואה ההומוגנית: \\(y'' + 4y = 0\\) עם משוואה אופיינית \\(r^2 + 4 = 0\\)<br/>
+      השורשים: \\(r = \\pm 2i\\)<br/>
+      הפתרון ההומוגני: \\(y_h = C_1 \\cos(2x) + C_2 \\sin(2x)\\)<br/>
+      לפתרון הפרטי: \\(g(x)\\) היא קבוע (המספר 8), לכן ננחש \\(y_p = A\\) (קבוע).<br/>
+      עליכם לגזור את הפתרון הפרטי, להציבו במד"ר ולמצוא את הקבוע A בעזרת השוואת המקדמים של שני האגפים.
     `,
-   solutionDisplayLatex: String.raw`y = C_{1} \cos(x) + C_{2} \sin(x) + \frac{1}{2}e^x`,
+    solutionDisplayLatex: String.raw`y = C_1 \cos(2x) + C_2 \sin(2x) + 2`,
     solutionStepsHtml: `
-      המשוואה ההומוגנית: \\(y'' + y = 0\\) עם \\(r^2 + 1 = 0\\).<br/>
-      שורשים מרוכבים: \\(r = \\pm i\\).<br/>
-      הפתרון ההומוגני: \\(y_h = C_1 \\cos(x) + C_2 \\sin(x)\\).<br/>
-      וריאציית פרמטרים: \\(W = \\cos^2(x) + \\sin^2(x) = 1\\).<br/>
-      הפתרון הפרטי: \\(y_p = \\frac{1}{2}e^x\\).<br/>
-      הפתרון הכללי: \\(y = C_1 \\cos(x) + C_2 \\sin(x) + \\frac{1}{2}e^x\\).
+      המשוואה ההומוגנית: \\(y'' + 4y = 0\\) עם \\(r^2 + 4 = 0\\).<br/>
+      שורשים מרוכבים: \\(r = \\pm 2i\\).<br/>
+      הפתרון ההומוגני: \\(y_h = C_1 \\cos(2x) + C_2 \\sin(2x)\\).<br/>
+      לפתרון פרטי: ננחש \\(y_p = A\\) (קבוע). אז \\(y_p' = 0, y_p'' = 0\\).<br/>
+      הצבה במשוואה: \\(0 + 4A = 8 \\Rightarrow A = 2\\).<br/>
+      הפתרון הכללי: \\(y = C_1 \\cos(2x) + C_2 \\sin(2x) + 2\\).
     `,
-    check: {
-      type: 'variation_parameters_form',
-      homogeneousTerms: ['cos(x)', 'sin(x)'],
-      particularTerm: 'exp(x)',
-      particularCoeff: 0.5
-    },
-    exampleInput: String.raw`y = C_1*sin(x) + C_2*cos(x)`
+    exampleInput: String.raw`y = C_1*e^x + C_2*x*e^x`
   }
 ];
 
@@ -310,7 +321,9 @@ function convertMathNotation(s){
   // Handle other missing multiplications like 2x, 3x, etc.
   s = s.replace(/(\d+)([a-zA-Z])/g, '$1*$2');
   
-  s = s.replace(/\^/g, '**');
+  // Convert ^ to pow() function instead of ** for better mathjs compatibility
+  s = s.replace(/([a-zA-Z_][a-zA-Z0-9_]*|\d+)\s*\^\s*([a-zA-Z0-9_]+|\([^)]+\))/g, 'pow($1, $2)');
+  
   return s;
 }
 function normalizeToPlain(s){
@@ -344,27 +357,14 @@ function normalizeToPlain(s){
 }
 
 /* =========================
-   Checker - COMPLETELY REWRITTEN FOR NEGATIVE DETECTION
+   בודק גנרי - מותאם לתרגיל המקדמים הבלתי מוגדרים
    ========================= */
-const currentCheck = { type: null, homogeneousTerms: [], particularTerm: '', particularCoeff: 1 };
-
-function checkVariationParametersSolution(userRaw) {
-    if (!userRaw || !userRaw.trim()) return false;
+function checkSolution(userRaw, exerciseType) {
+    if (!userRaw || !userRaw.trim() || !exerciseType) return false;
     
     try {
-        console.log('STARTING FRESH CHECK - VERSION 2.0');
+        console.log('STARTING CHECK - Exercise Type:', exerciseType.name);
         console.log('Raw input:', userRaw);
-        
-        // FIRST: Check for negative patterns in original LaTeX/Plain input
-        const originalLower = userRaw.toLowerCase();
-        console.log('Checking original input for negative patterns...');
-        
-        if (/-\s*\\frac\{1\}\{2\}/.test(originalLower) || 
-            /-\s*1\/2/.test(originalLower) || 
-            /-\s*0\.5/.test(originalLower)) {
-            console.log('IMMEDIATE REJECTION: Found negative coefficient in original input');
-            return false;
-        }
         
         // Normalize input
         const normalized = normalizeToPlain(userRaw).toLowerCase().replace(/\s+/g, '');
@@ -387,61 +387,79 @@ function checkVariationParametersSolution(userRaw) {
         
         console.log('Signed terms:', signedTerms);
         
-        // Check each term
-        let cosCount = 0, sinCount = 0, expCount = 0;
+        // בדיקה גנרית של רכיבים
+        const foundTerms = {};
+        exerciseType.requiredTerms.forEach((reqTerm, index) => {
+            foundTerms[reqTerm.type + '_' + (reqTerm.function || reqTerm.value || index)] = 0;
+        });
         
         for (let term of signedTerms) {
             console.log('Analyzing term:', term);
             
             const isNegative = term.startsWith('-');
             const cleanTerm = term.replace(/^[+\-]/, '');
+            let termMatched = false;
             
-            if (/^c(?:_?\d*)\*?cos\(x\)$/.test(cleanTerm) || /^cos\(x\)\*?c(?:_?\d*)$/.test(cleanTerm) || /^c(?:_?\d*)\*?cos\s*x$/.test(cleanTerm) || /^cos\s*x\*?c(?:_?\d*)$/.test(cleanTerm) || /^[\d\-]*\*?c(?:_?\d*)\*?cos\(x\)$/.test(cleanTerm) || /^[\d\-]*c(?:_?\d*)\*?cos\(x\)$/.test(cleanTerm) || /^[\d\-]*\*?c(?:_?\d*)\*?cos\s*x$/.test(cleanTerm) || /^[\d\-]*c(?:_?\d*)\*?cos\s*x$/.test(cleanTerm)) {
-                cosCount++;
-                console.log('Found cos term:', term);
-            } else if (/^c(?:_?\d*)\*?sin\(x\)$/.test(cleanTerm) || /^sin\(x\)\*?c(?:_?\d*)$/.test(cleanTerm) || /^c(?:_?\d*)\*?sin\s*x$/.test(cleanTerm) || /^sin\s*x\*?c(?:_?\d*)$/.test(cleanTerm) || /^[\d\-]*\*?c(?:_?\d*)\*?sin\(x\)$/.test(cleanTerm) || /^[\d\-]*c(?:_?\d*)\*?sin\(x\)$/.test(cleanTerm) || /^[\d\-]*\*?c(?:_?\d*)\*?sin\s*x$/.test(cleanTerm) || /^[\d\-]*c(?:_?\d*)\*?sin\s*x$/.test(cleanTerm)) {
-                sinCount++;
-                console.log('Found sin term:', term);
-            } else if (/0\.5.*exp\(x\)|exp\(x\).*0\.5|1\/2.*exp\(x\)|exp\(x\).*1\/2/.test(cleanTerm)) {
-                console.log('Found potential exp term, checking sign and coefficient...');
-                
-                if (isNegative) {
-                    console.log('REJECTION: Negative exp coefficient detected!');
-                    return false;
+            // בדיקת רכיבים לפי הגדרת התרגיל
+            exerciseType.requiredTerms.forEach(reqTerm => {
+                if (!termMatched) {
+                    if (reqTerm.type === 'trig') {
+                        const func = reqTerm.function;
+                        const coeff = reqTerm.coefficient;
+                        const key = reqTerm.type + '_' + reqTerm.function;
+                        
+                        // חיפוש cos(2x) או sin(2x) עם C_1 או C_2
+                        const patterns = [
+                            new RegExp(`^c(?:_?\\d*)\\*?${func}\\(${coeff}\\*?x\\)$`),
+                            new RegExp(`^${func}\\(${coeff}\\*?x\\)\\*?c(?:_?\\d*)$`),
+                            new RegExp(`^c(?:_?\\d*)\\*?${func}\\(${coeff}x\\)$`),
+                            new RegExp(`^${func}\\(${coeff}x\\)\\*?c(?:_?\\d*)$`)
+                        ];
+                        
+                        if (patterns.some(pattern => pattern.test(cleanTerm))) {
+                            foundTerms[key]++;
+                            termMatched = true;
+                            console.log(`Found ${func}(${coeff}x) term:`, term);
+                        }
+                    } else if (reqTerm.type === 'constant') {
+                        const expectedValue = reqTerm.value;
+                        const key = reqTerm.type + '_' + reqTerm.value;
+                        
+                        // בדיקת קבוע
+                        if (new RegExp(`^${expectedValue}$`).test(cleanTerm)) {
+                            if (isNegative && !reqTerm.allowNegative) {
+                                console.log('REJECTION: Negative constant coefficient detected!');
+                                return false;
+                            }
+                            
+                            foundTerms[key]++;
+                            termMatched = true;
+                            console.log('Found constant term:', term);
+                        }
+                    }
                 }
-                
-                // Check if coefficient is exactly 1/2 or 0.5
-                const hasCorrectCoeff = /^0\.5\*?exp\(x\)$|^exp\(x\)\*?0\.5$|^1\/2\*?exp\(x\)$|^exp\(x\)\*?1\/2$|^\(0\.5\)\*?exp\(x\)$|^exp\(x\)\*?\(0\.5\)$|^\(1\/2\)\*?exp\(x\)$|^exp\(x\)\*?\(1\/2\)$/.test(cleanTerm);
-                
-                if (!hasCorrectCoeff) {
-                    console.log('REJECTION: Wrong exp coefficient - must be exactly 1/2 or 0.5');
-                    console.log('   Clean term was:', cleanTerm);
-                    return false;
-                }
-                
-                expCount++;
-                console.log('Found correct positive exp term with 1/2 coefficient:', term);
-            } else if (/exp\(x\)/.test(cleanTerm)) {
-                console.log('REJECTION: exp term without proper coefficient');
-                return false;
-            } else {
-                console.log('REJECTION: Invalid term');
+            });
+            
+            if (!termMatched) {
+                console.log('REJECTION: Invalid or unrecognized term:', cleanTerm);
                 return false;
             }
         }
         
-        console.log('Final counts - cos:', cosCount, 'sin:', sinCount, 'exp:', expCount);
+        console.log('Found terms:', foundTerms);
         
-        // Check counts
-        if (cosCount !== 1 || sinCount !== 1 || expCount !== 1) {
-            console.log('REJECTION: Wrong number of terms');
-            return false;
+        // בדיקה שכל הרכיבים הנדרשים נמצאו בדיוק פעם אחת
+        for (const [termKey, count] of Object.entries(foundTerms)) {
+            if (count !== 1) {
+                console.log(`REJECTION: Wrong number of ${termKey} terms: ${count}`);
+                return false;
+            }
         }
         
-        // Check constants
+        // בדיקת מספר הקבועים
         const constants = normalized.match(/c(?:_?\d+)/g) || [];
-        if (constants.length < 2) {
-            console.log('REJECTION: Not enough constants');
+        if (constants.length < exerciseType.constantCount) {
+            console.log(`REJECTION: Not enough constants - found ${constants.length}, expected ${exerciseType.constantCount}`);
             return false;
         }
         
@@ -479,13 +497,45 @@ waitForLibraries(function(){
         await renderLatexTo('render', raw, true);
         setStatus('מעובד במצב LaTeX', 'ok');
       }else{
+        console.log('Raw input:', raw);
         const plain = normalizeToPlain(raw);
+        console.log('After normalization:', plain);
         const node = math.parse(plain);
-        const latex = node.toTex({ parenthesis:'keep', implicit:'show' });
+        let latex = node.toTex({ parenthesis:'keep', implicit:'show' });
+        
+        // DEBUG: Let's see what mathjs actually returns for exp
+        console.log('mathjs returned:', latex);
+        
+        // Fix the CORRECT pattern - mathjs returns C\_1 not C_1
+        latex = latex.replace(/C\\_1/g, 'C_{1}');
+        latex = latex.replace(/C\\_2/g, 'C_{2}');
+        latex = latex.replace(/C\\_3/g, 'C_{3}');
+        latex = latex.replace(/C\\_4/g, 'C_{4}');
+        
+        // Fix exp to e^x - mathjs returns \cdot\exp\left( x\right)
+        latex = latex.replace(/\\cdot\\exp\\left\(\s*x\s*\\right\)/g, '\\cdot e^{x}');
+        latex = latex.replace(/\\cdot\\exp\\left\(\s*([^)]+)\s*\\right\)/g, '\\cdot e^{$1}');
+        latex = latex.replace(/\\exp\\left\(\s*x\s*\\right\)/g, 'e^{x}');
+        latex = latex.replace(/\\exp\\left\(\s*([^)]+)\s*\\right\)/g, 'e^{$1}');
+        latex = latex.replace(/exp\s*\(\s*x\s*\)/g, 'e^{x}');
+        latex = latex.replace(/exp\s*\(\s*([^)]+)\s*\)/g, 'e^{$1}');
+        
+        // Remove unnecessary parentheses around simple variables in powers
+        // \left( x\right)^{2} → x^{2}  (for single variables)
+        latex = latex.replace(/\\left\(\s*([a-zA-Z]+)\s*\\right\)\^/g, '$1^');
+        // \left( x\right)^{power} → x^{power}
+        latex = latex.replace(/\\left\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\\right\)\^/g, '$1^');
+        // Remove unnecessary parentheses around simple numbers in powers
+        // \left(2\right)^{ x} → 2^{ x}  (for single numbers)
+        latex = latex.replace(/\\left\(\s*(\d+)\s*\\right\)\^/g, '$1^');
+        
+        console.log('After fixing:', latex);
+        
         await renderLatexTo('render', latex, true);
         setStatus('מעובד במצב Plain → LaTeX באמצעות mathjs', 'ok');
       }
     }catch(err){
+      console.log('Parse error:', err);
       document.getElementById('render').innerHTML =
         `<div class="monospace">שגיאה בעיבוד\n${(err?.message||String(err))}\n\nקלט\n${raw}</div>`;
       setStatus('שגיאה בעיבוד — לבדוק תחביר', 'bad');
@@ -503,13 +553,17 @@ waitForLibraries(function(){
     const latexMode = forceLatexEl.checked || looksLikeLatex(raw);
     const el = document.getElementById('checkMsg');
     
+    // Get current problem and its exercise type
+    const currentProblem = problems[0]; // Or get from current index
+    const exerciseTypeDefinition = exerciseTypes[currentProblem.type];
+    
     // Try to normalize LaTeX input for checking
     if(latexMode && !forceLatexEl.checked) {
       // Auto-detected LaTeX - try to normalize and check
       try {
         const normalized = normalizeToPlain(raw0);
         console.log('Auto-detected LaTeX, normalized to:', normalized);
-        const ok = checkVariationParametersSolution(raw0);
+        const ok = checkSolution(raw0, exerciseTypeDefinition);
         el.className='status ' + (ok?'ok':'bad'); 
         el.textContent = ok ? 'תשובה נכונה' : 'תשובה לא נכונה';
       } catch(err) {
@@ -522,7 +576,7 @@ waitForLibraries(function(){
       el.textContent='בדיקת נכונות לא פועלת במצב LaTeX מוכרח - בטלו הסימון לבדיקה';
     } else {
       // Plain mode - normal check
-      const ok = checkVariationParametersSolution(raw0);
+      const ok = checkSolution(raw0, exerciseTypeDefinition);
       el.className='status ' + (ok?'ok':'bad'); 
       el.textContent = ok ? 'תשובה נכונה' : 'תשובה לא נכונה';
     }
@@ -530,10 +584,6 @@ waitForLibraries(function(){
 
   async function loadProblem(index=0){
     const p = problems[index];
-    currentCheck.type = p.check.type;
-    currentCheck.homogeneousTerms = p.check.homogeneousTerms;
-    currentCheck.particularTerm = p.check.particularTerm;
-    currentCheck.particularCoeff = p.check.particularCoeff;
 
     await renderLatexTo('problemRender', p.latexProblem, true);
     await renderLatexTo('solutionBox', p.solutionDisplayLatex, true);
@@ -587,15 +637,23 @@ const items = [
   {label:'C_1', title:'קבוע C_1',     click:()=>insertAtCaret(input,'C_1','')},
   {label:'C_2', title:'קבוע C_2',     click:()=>insertAtCaret(input,'C_2','')},
 
-  {label:'sin', title:'\\sin( )',     click:()=>insertAtCaret(input,'\\sin(',')')},
-  {label:'cos', title:'\\cos( )',     click:()=>insertAtCaret(input,'\\cos(',')')},
+  {label:'sin', title:'sin( )',       click:()=>insertAtCaret(input,'sin(',')')},
+  {label:'cos', title:'cos( )',       click:()=>insertAtCaret(input,'cos(',')')},
+
+  {label:'sin(2x)', title:'sin(2x)',  click:()=>insertAtCaret(input,'sin(2x)','')},
+  {label:'cos(2x)', title:'cos(2x)',  click:()=>insertAtCaret(input,'cos(2x)','')},
 
   {label:'frac',title:'\\frac{ }{ }', click:()=>insertAtCaret(input,'\\frac{','}{}')},
   {label:'√',   title:'\\sqrt{ }',    click:()=>insertAtCaret(input,'\\sqrt{','}')},
 
-  {label:'e^x', title:'e^{x}',        click:()=>insertAtCaret(input,'e^','x')},
-  {label:'x^2', title:'x^{2}',        click:()=>insertAtCaret(input,'x^','2')},
+  {label:'e^x', title:'e^x',          click:()=>insertAtCaret(input,'e^x','')},
+  {label:'e^{2x}', title:'e^(2x)',   click:()=>insertAtCaret(input,'e^(2*x)','')},
+  {label:'x*e^x', title:'x*e^x',     click:()=>insertAtCaret(input,'x*e^x','')},
 
+  {label:'x^2', title:'x^2',          click:()=>insertAtCaret(input,'x^2','')},
+  {label:'x^3', title:'x^3',          click:()=>insertAtCaret(input,'x^3','')},
+
+  {label:'+', title:'חיבור',          click:()=>insertAtCaret(input,' + ','')},
   {label:'∫',   title:'\\int',        click:()=>insertAtCaret(input,'\\int ','')},
   
   {label:'( )', title:'סוגריים עגולים',   click:()=>insertAtCaret(input,'(',')')},
